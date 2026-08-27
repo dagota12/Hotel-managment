@@ -47,6 +47,20 @@ export function useAttendanceReport(params: AttendanceQueryParams) {
   });
 }
 
+export function useAttendanceTrend(days = 7) {
+  return useQuery({
+    queryKey: ["attendance", "trend", days],
+    queryFn: () => attendanceService.getTrend(days),
+  });
+}
+
+export function useDepartmentStats() {
+  return useQuery({
+    queryKey: ["attendance", "department-stats"],
+    queryFn: () => attendanceService.getDepartmentStats(),
+  });
+}
+
 export function useUpdateAttendance() {
   const queryClient = useQueryClient();
 

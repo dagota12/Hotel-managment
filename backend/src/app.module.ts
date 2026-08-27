@@ -13,6 +13,7 @@ import { ShiftsModule } from "./shifts/shifts.module";
   imports: [
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), "..", "frontend"),
+      exclude: ["/attendance/(.*)", "/employees/(.*)", "/departments/(.*)", "/roles/(.*)", "/shifts/(.*)", "/reports/(.*)", "/docs/(.*)"],
     }),
     TypeOrmModule.forRoot({
       type: "sqlite",

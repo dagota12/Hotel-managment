@@ -23,6 +23,18 @@ export class AttendanceController {
     return this.attendanceService.findToday();
   }
 
+  @Get("trend")
+  @ApiOkResponse({ description: "Get attendance trend for the last N days" })
+  getTrend(@Query("days") days?: string) {
+    return this.attendanceService.getTrend(days ? parseInt(days, 10) : 7);
+  }
+
+  @Get("department-stats")
+  @ApiOkResponse({ description: "Get attendance rate per department" })
+  getDepartmentStats() {
+    return this.attendanceService.getDepartmentStats();
+  }
+
   @Post("check-in")
   @ApiCreatedResponse({ description: "Check an employee in for today" })
   checkIn(@Body() dto: MarkAttendanceDto) {

@@ -28,6 +28,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { useTodayAttendance, useCheckIn, useCheckOut, useUpdateAttendance } from "@/hooks/use-attendance";
+import { formatTime } from "@/lib/format-time";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import type { TodayAttendanceRow } from "@/services/attendance.service";
@@ -245,10 +246,10 @@ export default function AttendancePage() {
                     <TableCell className="text-muted-foreground">{row.department}</TableCell>
                     <TableCell className="text-muted-foreground">{row.shift}</TableCell>
                     <TableCell className="text-muted-foreground font-medium">
-                      {row.checkIn || "—"}
+                      {formatTime(row.checkIn)}
                     </TableCell>
                     <TableCell className="text-muted-foreground font-medium">
-                      {row.checkOut || "—"}
+                      {formatTime(row.checkOut)}
                     </TableCell>
                     <TableCell>
                       <span className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ${

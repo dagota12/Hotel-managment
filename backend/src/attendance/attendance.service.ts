@@ -208,4 +208,60 @@ export class AttendanceService {
   countStatus(records: AttendanceRecord[], status: AttendanceStatus): number {
     return records.filter((record) => record.status === status).length;
   }
+
+  async getTrend(days = 7): Promise<{ date: string; day: string; present: number; late: number; absent: number }[]> {
+    const result = [];
+    const today = new Date();
+
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().slice(0, 10);
+      const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
+
+      const records = await this.attendanceRepository.find({
+        where: { date: dateStr },
+      });
+
+      const present = records.filter(r => r.status === AttendanceStatus.Present).length;
+      const late = records.filter(r => r.status === AttendanceStatus.Late).length;
+      const absent = records.filter(r => r.status === AttendanceStatus.Absent || r.status === AttendanceStatus.Leave).length;
+
+      result.push({
+        date: dateStr,
+        day: dayName,
+        present,
+        late,
+        absent,
+      });
+    }
+
+    return result;
+  }
+
+  async getDepartmentStats(): Promise<{ department: string; employees: number; present: number; rate: number }[]> {
+    const employees = await this.employeesService.findAll();
+    const todayRows = await this.findToday();
+
+    const depMap = new Map<string, { total: number; present: number }>();
+
+    for (const emp of employees) {
+      const name = emp.department.name;
+      if (!depMap.has(name)) depMap.set(name, { total: 0, present: 0 });
+      depMap.get(name)!.total += 1;
+    }
+
+    for (const row of todayRows) {
+      if (row.checkIn && depMap.has(row.department)) {
+        depMap.get(row.department)!.present += 1;
+      }
+    }
+
+    return Array.from(depMap.entries()).map(([department, data]) => ({
+      department,
+      employees: data.total,
+      present: data.present,
+      rate: data.total > 0 ? Math.round((data.present / data.total) * 100) : 0,
+    }));
+  }
 }

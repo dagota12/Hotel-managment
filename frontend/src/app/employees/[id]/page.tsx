@@ -32,6 +32,7 @@ import {
 import { Loader2, ArrowLeft, Clock } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { formatTime } from "@/lib/format-time";
 import type { AttendanceRecord } from "@/types";
 
 function calculateTotalMinutes(checkIn: string | null, checkOut: string | null): number {
@@ -247,10 +248,10 @@ export default function EmployeeDetailPage() {
                             : record.status === "PRESENT" ? "text-green-500"
                             : ""
                           }>
-                            {record.checkIn || "—"}
+                            {formatTime(record.checkIn)}
                           </span>
                         </TableCell>
-                        <TableCell className="text-muted-foreground">{record.checkOut || "—"}</TableCell>
+                        <TableCell className="text-muted-foreground">{formatTime(record.checkOut)}</TableCell>
                         <TableCell className="text-muted-foreground font-medium">
                           {formatMinutes(calculateTotalMinutes(record.checkIn, record.checkOut))}
                         </TableCell>

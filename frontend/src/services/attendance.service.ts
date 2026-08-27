@@ -64,4 +64,16 @@ export const attendanceService = {
     });
     return data;
   },
+
+  async getTrend(days = 7) {
+    const { data } = await api.get<{ date: string; day: string; present: number; late: number; absent: number }[]>("/attendance/trend", {
+      params: { days },
+    });
+    return data;
+  },
+
+  async getDepartmentStats() {
+    const { data } = await api.get<{ department: string; employees: number; present: number; rate: number }[]>("/attendance/department-stats");
+    return data;
+  },
 };

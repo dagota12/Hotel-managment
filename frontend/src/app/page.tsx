@@ -1,7 +1,7 @@
 "use client";
 
-import { ArrowRight, Building2, Clock3, Users2, Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowRight, Building2, Clock3, Users2, Loader2, TrendingUp, Award } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -10,16 +10,46 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+import { Line, LineChart, Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell } from "recharts";
 import { useEmployees } from "@/hooks/use-employees";
-import { useTodayAttendance } from "@/hooks/use-attendance";
+import { useTodayAttendance, useAttendanceTrend, useDepartmentStats } from "@/hooks/use-attendance";
+import { formatTime } from "@/lib/format-time";
 import Link from "next/link";
 import { useMemo } from "react";
+
+const trendChartConfig = {
+  present: {
+    label: "Present",
+    color: "#EAB308", // Gold
+  },
+  late: {
+    label: "Late",
+    color: "#F59E0B", // Amber
+  },
+} satisfies ChartConfig;
+
+const COLORS = [
+  "#EAB308", // Gold
+  "#3B82F6", // Blue
+  "#10B981", // Emerald
+  "#F59E0B", // Amber
+  "#8B5CF6", // Purple
+  "#EC4899", // Pink
+];
 
 export default function Home() {
   const { data: employees, isLoading: employeesLoading } = useEmployees();
   const { data: attendance, isLoading: attendanceLoading } = useTodayAttendance();
+  const { data: trendData, isLoading: trendLoading } = useAttendanceTrend(7);
+  const { data: deptData, isLoading: deptLoading } = useDepartmentStats();
 
-  const isLoading = employeesLoading || attendanceLoading;
+  const isLoading = employeesLoading || attendanceLoading || trendLoading || deptLoading;
 
   const stats = useMemo(() => {
     if (!employees || !attendance) return { total: 0, present: 0, late: 0, missing: 0 };
@@ -38,30 +68,23 @@ export default function Home() {
     return { total, present, late, missing };
   }, [employees, attendance]);
 
-  const departmentStats = useMemo(() => {
-    if (!employees || !attendance) return [];
-    
-    const depMap = new Map<string, { total: number, present: number }>();
-    
-    employees.forEach(emp => {
-      const depName = emp.department.name;
-      if (!depMap.has(depName)) depMap.set(depName, { total: 0, present: 0 });
-      depMap.get(depName)!.total++;
+  const deptChartConfig = useMemo(() => {
+    const config: ChartConfig = {};
+    (deptData || []).forEach((item, index) => {
+      config[item.department] = {
+        label: item.department,
+        color: COLORS[index % COLORS.length],
+      };
     });
+    return config;
+  }, [deptData]);
 
-    attendance.forEach(record => {
-      if (record.checkIn) {
-        if (depMap.has(record.department)) {
-          depMap.get(record.department)!.present++;
-        }
-      }
-    });
-
-    return Array.from(depMap.entries()).map(([name, stats]) => ({
-      name,
-      ...stats
-    })).sort((a, b) => b.total - a.total);
-  }, [employees, attendance]);
+  // Compute dynamic chart height so bars stay tight and compact without huge vertical gaps
+  const deptChartHeight = useMemo(() => {
+    const count = (deptData || []).length;
+    if (count === 0) return 120;
+    return Math.min(320, Math.max(90, count * 45));
+  }, [deptData]);
 
   return (
     <div className="space-y-6">
@@ -123,91 +146,173 @@ export default function Home() {
             ))}
           </section>
 
-          {/* Tables Section */}
-          <section className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
-            {/* Today's Attendance */}
+          {/* Charts Section — Line Chart + Horizontal Bar Chart */}
+          <section className="grid gap-6 lg:grid-cols-2">
+            {/* Chart 1: Attendance Trend — Line Chart */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs uppercase tracking-[0.24em] text-primary">
-                      Today&apos;s attendance
+                      Operational Trend
                     </p>
-                    <CardTitle className="mt-1 text-xl">
-                      Operational snapshot
-                    </CardTitle>
+                    <CardTitle className="text-xl mt-1">Attendance — Last 7 Days</CardTitle>
                   </div>
-                  <Link
-                    href="/attendance"
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    View All →
-                  </Link>
+                  <TrendingUp className="h-5 w-5 text-primary" />
                 </div>
+                <CardDescription>Daily present vs. late check-in trendline</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="overflow-hidden rounded-lg border border-border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Employee</TableHead>
-                        <TableHead>Department</TableHead>
-                        <TableHead>Shift</TableHead>
-                        <TableHead>Check In</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {attendance?.slice(0, 5).map((row) => (
-                        <TableRow key={row.employeeId}>
-                          <TableCell className="font-medium">{row.employeeName}</TableCell>
-                          <TableCell className="text-muted-foreground">{row.department}</TableCell>
-                          <TableCell className="text-muted-foreground">{row.shift}</TableCell>
-                          <TableCell className="text-muted-foreground">{row.checkIn || "—"}</TableCell>
-                          <TableCell>
-                            <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${
-                              row.status === "PRESENT" 
-                                ? "bg-green-500/10 text-green-500 border-green-500/20" 
-                                : row.status === "LATE"
-                                ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                                : "bg-muted text-muted-foreground border-border"
-                            }`}>
-                              {row.status}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                <ChartContainer config={trendChartConfig} className="h-[260px] w-full">
+                  <LineChart
+                    accessibilityLayer
+                    data={trendData || []}
+                    margin={{ top: 10, right: 15, left: -20, bottom: 0 }}
+                  >
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis
+                      dataKey="day"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                    />
+                    <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line
+                      type="monotone"
+                      dataKey="present"
+                      stroke="var(--color-present)"
+                      strokeWidth={2.5}
+                      dot={{ r: 4, fill: "var(--color-present)" }}
+                      activeDot={{ r: 6 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="late"
+                      stroke="var(--color-late)"
+                      strokeWidth={2.5}
+                      dot={{ r: 4, fill: "var(--color-late)" }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ChartContainer>
               </CardContent>
+              <CardFooter className="border-t border-border pt-3 text-xs text-muted-foreground">
+                Line chart showing 7-day present (Gold) vs late (Amber) trends.
+              </CardFooter>
             </Card>
 
-            {/* Department Overview */}
+            {/* Chart 2: Department Attendance Rate — Horizontal Bar Chart */}
             <Card>
               <CardHeader>
-                <p className="text-xs uppercase tracking-[0.24em] text-primary">
-                  Department overview
-                </p>
-                <CardTitle className="text-xl">Quick summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2.5">
-                  {departmentStats.map((dep) => (
-                    <div
-                      key={dep.name}
-                      className="flex items-center justify-between rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm transition-colors hover:bg-muted"
-                    >
-                      <span className="font-medium text-foreground">{dep.name}</span>
-                      <span className="text-muted-foreground">
-                        {dep.total} employees · {dep.present} present
-                      </span>
-                    </div>
-                  ))}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.24em] text-primary">
+                      Department Insights
+                    </p>
+                    <CardTitle className="text-xl mt-1">Attendance Rate by Department</CardTitle>
+                  </div>
+                  <Award className="h-5 w-5 text-primary" />
                 </div>
+                <CardDescription>Today&apos;s check-in completion rate per team</CardDescription>
+              </CardHeader>
+              <CardContent className="overflow-y-auto max-h-[300px] pr-2">
+                <ChartContainer config={deptChartConfig} style={{ height: `${deptChartHeight}px` }} className="w-full">
+                  <BarChart
+                    layout="vertical"
+                    accessibilityLayer
+                    data={deptData || []}
+                    margin={{ top: 10, right: 25, left: 15, bottom: 0 }}
+                  >
+                    <CartesianGrid horizontal={false} strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis type="number" domain={[0, 100]} unit="%" tickLine={false} axisLine={false} />
+                    <YAxis
+                      dataKey="department"
+                      type="category"
+                      tickLine={false}
+                      axisLine={false}
+                      width={100}
+                    />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="rate" maxBarSize={16} radius={[0, 4, 4, 0]}>
+                      {(deptData || []).map((entry, index) => (
+                        <Cell key={`bar-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ChartContainer>
               </CardContent>
+              <CardFooter className="border-t border-border pt-3 text-xs text-muted-foreground">
+                Horizontal bar chart showing attendance percentage for each department.
+              </CardFooter>
             </Card>
           </section>
+
+          {/* Today's Attendance Table */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-primary">
+                    Today&apos;s attendance
+                  </p>
+                  <CardTitle className="mt-1 text-xl">
+                    Operational snapshot
+                  </CardTitle>
+                </div>
+                <Link
+                  href="/attendance"
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  View All →
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                <Table>
+                  <TableHeader className="bg-muted/30">
+                    <TableRow>
+                      <TableHead className="font-semibold text-foreground">Employee</TableHead>
+                      <TableHead className="font-semibold text-foreground">Department</TableHead>
+                      <TableHead className="font-semibold text-foreground">Shift</TableHead>
+                      <TableHead className="font-semibold text-foreground">Check In Time</TableHead>
+                      <TableHead className="font-semibold text-foreground">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {attendance?.slice(0, 6).map((row) => (
+                      <TableRow key={row.employeeId} className="hover:bg-muted/50 transition-colors">
+                        <TableCell className="font-medium text-foreground py-3.5">{row.employeeName}</TableCell>
+                        <TableCell className="text-muted-foreground">{row.department}</TableCell>
+                        <TableCell className="text-muted-foreground">{row.shift}</TableCell>
+                        <TableCell className="font-medium">
+                          <span className={
+                            row.status === "LATE" ? "text-amber-500" 
+                            : row.status === "PRESENT" ? "text-green-500" 
+                            : "text-muted-foreground"
+                          }>
+                            {formatTime(row.checkIn)}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center justify-center rounded-full px-3 py-0.5 text-xs font-semibold ${
+                            row.status === "PRESENT" 
+                              ? "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400" 
+                              : row.status === "LATE"
+                              ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400"
+                              : "bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400"
+                          }`}>
+                            {row.status}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>
