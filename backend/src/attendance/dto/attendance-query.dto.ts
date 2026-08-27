@@ -24,4 +24,12 @@ export class AttendanceQueryDto {
   @IsOptional()
   @IsEnum(AttendanceStatus)
   status?: AttendanceStatus;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  page?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  limit?: number;
 }

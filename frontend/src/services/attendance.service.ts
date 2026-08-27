@@ -3,6 +3,7 @@ import type { AttendanceRecord } from "@/types";
 
 export type TodayAttendanceRow = {
   employeeId: string;
+  recordId: string | null;
   employeeName: string;
   department: string;
   shift: string;
@@ -11,16 +12,42 @@ export type TodayAttendanceRow = {
   status: string;
 };
 
+export type PaginatedAttendance = {
+  data: AttendanceRecord[];
+  total: number;
+};
+
+export type AttendanceQueryParams = {
+  employeeId?: string;
+  from?: string;
+  to?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+};
+
 export const attendanceService = {
   async getToday() {
     const { data } = await api.get<TodayAttendanceRow[]>("/attendance/today");
     return data;
   },
 
-  async getEmployeeAttendance(employeeId: string) {
-    const { data } = await api.get<AttendanceRecord[]>("/attendance", {
-      params: { employeeId },
+  async getAttendance(params: AttendanceQueryParams) {
+    const { data } = await api.get<PaginatedAttendance>("/attendance", {
+      params,
     });
+    return data;
+  },
+
+  async getEmployeeAttendance(employeeId: string, page = 1, limit = 10) {
+    const { data } = await api.get<PaginatedAttendance>("/attendance", {
+      params: { employeeId, page, limit },
+    });
+    return data;
+  },
+
+  async update(id: string, updateData: { checkIn?: string; checkOut?: string; status?: string }) {
+    const { data } = await api.patch<AttendanceRecord>(`/attendance/${id}`, updateData);
     return data;
   },
 

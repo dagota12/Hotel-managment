@@ -137,6 +137,7 @@ export class AttendanceService {
       const record = recordsByEmployeeId.get(employee.id);
       return {
         employeeId: employee.id,
+        recordId: record?.id ?? null,
         employeeName: employee.fullName,
         department: employee.department.name,
         shift: employee.shift.name,
@@ -147,7 +148,9 @@ export class AttendanceService {
     });
   }
 
-  async findAll(query: AttendanceQueryDto): Promise<AttendanceRecord[]> {
+  async findAll(
+    query: AttendanceQueryDto,
+  ): Promise<{ data: AttendanceRecord[]; total: number }> {
     const where: Record<string, unknown> = {};
 
     if (query.employeeId) {
@@ -166,10 +169,19 @@ export class AttendanceService {
       where.status = query.status;
     }
 
-    return this.attendanceRepository.find({
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await this.attendanceRepository.findAndCount({
       where: where as never,
       order: { date: "DESC", createdAt: "DESC" },
+      skip,
+      take: limit,
+      relations: ["employee", "employee.department"],
     });
+
+    return { data, total };
   }
 
   async findOne(id: string): Promise<AttendanceRecord> {
@@ -180,6 +192,17 @@ export class AttendanceService {
       throw new NotFoundException("Attendance record not found");
     }
     return attendanceRecord;
+  }
+
+  async update(id: string, dto: import("./dto/update-attendance.dto").UpdateAttendanceDto): Promise<AttendanceRecord> {
+    const record = await this.findOne(id);
+    
+    if (dto.checkIn !== undefined) record.checkIn = dto.checkIn;
+    if (dto.checkOut !== undefined) record.checkOut = dto.checkOut;
+    if (dto.status !== undefined) record.status = dto.status;
+    if (dto.note !== undefined) record.note = dto.note;
+
+    return this.attendanceRepository.save(record);
   }
 
   countStatus(records: AttendanceRecord[], status: AttendanceStatus): number {

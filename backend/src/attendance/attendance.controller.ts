@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Post, Query } from "@nestjs/common";
+import { Body, Controller, Get, Post, Patch, Param, Query } from "@nestjs/common";
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { AttendanceQueryDto } from "./dto/attendance-query.dto";
 import { CreateAttendanceDto } from "./dto/create-attendance.dto";
 import { MarkAttendanceDto } from "./dto/mark-attendance.dto";
+import { UpdateAttendanceDto } from "./dto/update-attendance.dto";
 import { AttendanceService } from "./attendance.service";
 
 @ApiTags("attendance")
@@ -39,4 +40,11 @@ export class AttendanceController {
   create(@Body() dto: CreateAttendanceDto) {
     return this.attendanceService.create(dto);
   }
+
+  @Patch(":id")
+  @ApiOkResponse({ description: "Update attendance record" })
+  update(@Param("id") id: string, @Body() dto: UpdateAttendanceDto) {
+    return this.attendanceService.update(id, dto);
+  }
 }
+

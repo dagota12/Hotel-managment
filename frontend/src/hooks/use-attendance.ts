@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { attendanceService } from "@/services/attendance.service";
+import type { AttendanceQueryParams } from "@/services/attendance.service";
 
 export function useTodayAttendance() {
   return useQuery({
@@ -30,10 +31,31 @@ export function useCheckOut() {
   });
 }
 
-export function useEmployeeAttendance(employeeId: string) {
+export function useEmployeeAttendance(employeeId: string, page = 1, limit = 10) {
   return useQuery({
-    queryKey: ["attendance", employeeId],
-    queryFn: () => attendanceService.getEmployeeAttendance(employeeId),
+    queryKey: ["attendance", employeeId, page, limit],
+    queryFn: () => attendanceService.getEmployeeAttendance(employeeId, page, limit),
     enabled: !!employeeId,
+  });
+}
+
+export function useAttendanceReport(params: AttendanceQueryParams) {
+  return useQuery({
+    queryKey: ["attendance", "report", params],
+    queryFn: () => attendanceService.getAttendance(params),
+    enabled: !!(params.from && params.to),
+  });
+}
+
+export function useUpdateAttendance() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, dto }: { id: string; dto: { checkIn?: string; checkOut?: string; status?: string } }) =>
+      attendanceService.update(id, dto),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["attendance", "today"] });
+      queryClient.invalidateQueries({ queryKey: ["attendance"] });
+    },
   });
 }
