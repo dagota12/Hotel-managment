@@ -127,7 +127,26 @@ GET {{baseUrl}}/attendance?from={{fromDate}}&to={{toDate}}
 ### Filter attendance by employee and status
 GET {{baseUrl}}/attendance?employeeId={{employeeId}}&from={{fromDate}}&to={{toDate}}&status=PRESENT
 
-### Create attendance
+### Today's attendance dashboard
+GET {{baseUrl}}/attendance/today
+
+### Check employee in for today
+POST {{baseUrl}}/attendance/check-in
+Content-Type: application/json
+
+{
+  "employeeId": "{{employeeId}}"
+}
+
+### Check employee out for today
+POST {{baseUrl}}/attendance/check-out
+Content-Type: application/json
+
+{
+  "employeeId": "{{employeeId}}"
+}
+
+### Admin attendance correction
 POST {{baseUrl}}/attendance
 Content-Type: application/json
 
@@ -137,7 +156,7 @@ Content-Type: application/json
   "checkIn": "08:03",
   "checkOut": "17:02",
   "status": "PRESENT",
-  "note": "Arrived a few minutes late"
+  "note": "Manual correction"
 }
 
 ### Reports
