@@ -29,3 +29,11 @@ export function useCheckOut() {
     },
   });
 }
+
+export function useEmployeeAttendance(employeeId: string) {
+  return useQuery({
+    queryKey: ["attendance", employeeId],
+    queryFn: () => attendanceService.getEmployeeAttendance(employeeId),
+    enabled: !!employeeId,
+  });
+}

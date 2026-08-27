@@ -1,6 +1,7 @@
-import { ArrowRight, Building2, Clock3, Users2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+"use client";
+
+import { ArrowRight, Building2, Clock3, Users2, Loader2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -9,8 +10,59 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useEmployees } from "@/hooks/use-employees";
+import { useTodayAttendance } from "@/hooks/use-attendance";
+import Link from "next/link";
+import { useMemo } from "react";
 
 export default function Home() {
+  const { data: employees, isLoading: employeesLoading } = useEmployees();
+  const { data: attendance, isLoading: attendanceLoading } = useTodayAttendance();
+
+  const isLoading = employeesLoading || attendanceLoading;
+
+  const stats = useMemo(() => {
+    if (!employees || !attendance) return { total: 0, present: 0, late: 0, missing: 0 };
+    
+    const total = employees.length;
+    let present = 0;
+    let late = 0;
+    let missing = 0;
+
+    attendance.forEach(record => {
+      if (record.status === "PRESENT") present++;
+      else if (record.status === "LATE") late++;
+      else if (!record.checkIn) missing++;
+    });
+
+    return { total, present, late, missing };
+  }, [employees, attendance]);
+
+  const departmentStats = useMemo(() => {
+    if (!employees || !attendance) return [];
+    
+    const depMap = new Map<string, { total: number, present: number }>();
+    
+    employees.forEach(emp => {
+      const depName = emp.department.name;
+      if (!depMap.has(depName)) depMap.set(depName, { total: 0, present: 0 });
+      depMap.get(depName)!.total++;
+    });
+
+    attendance.forEach(record => {
+      if (record.checkIn) {
+        if (depMap.has(record.department)) {
+          depMap.get(record.department)!.present++;
+        }
+      }
+    });
+
+    return Array.from(depMap.entries()).map(([name, stats]) => ({
+      name,
+      ...stats
+    })).sort((a, b) => b.total - a.total);
+  }, [employees, attendance]);
+
   return (
     <div className="space-y-6">
       {/* Hero Section */}
@@ -32,126 +84,132 @@ export default function Home() {
               </div>
             </div>
 
-            <a
+            <Link
               href="/attendance"
               className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/80"
             >
               Open Today&apos;s Attendance
               <ArrowRight className="h-4 w-4" />
-            </a>
+            </Link>
           </div>
         </CardContent>
       </Card>
 
-      {/* Stats Cards */}
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          { label: "Total Employees", value: "25", icon: Users2 },
-          { label: "Present Today", value: "19", icon: Clock3 },
-          { label: "Late Today", value: "3", icon: Building2 },
-          { label: "Not Checked In", value: "3", icon: Users2 },
-        ].map(({ label, value, icon: Icon }) => (
-          <Card key={label}>
-            <CardContent>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sm text-muted-foreground">{label}</span>
-                <Icon className="h-5 w-5 text-primary" />
-              </div>
-              <div className="mt-4 text-4xl font-semibold tracking-tight text-foreground">
-                {value}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </section>
+      {isLoading ? (
+        <div className="flex h-64 items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <>
+          {/* Stats Cards */}
+          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {[
+              { label: "Total Employees", value: stats.total, icon: Users2 },
+              { label: "Present Today", value: stats.present, icon: Clock3 },
+              { label: "Late Today", value: stats.late, icon: Building2 },
+              { label: "Not Checked In", value: stats.missing, icon: Users2 },
+            ].map(({ label, value, icon: Icon }) => (
+              <Card key={label}>
+                <CardContent>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-muted-foreground">{label}</span>
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="mt-4 text-4xl font-semibold tracking-tight text-foreground">
+                    {value}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </section>
 
-      {/* Tables Section */}
-      <section className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
-        {/* Today's Attendance */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-primary">
-                  Today&apos;s attendance
-                </p>
-                <CardTitle className="mt-1 text-xl">
-                  Operational snapshot
-                </CardTitle>
-              </div>
-              <a
-                href="/attendance"
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                View All →
-              </a>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Shift</TableHead>
-                  <TableHead>Check In</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {[
-                  ["John Doe", "Front Office", "Morning", "08:03", "Late"],
-                  ["Sarah Ali", "Housekeeping", "Morning", "07:55", "Present"],
-                  ["Mike Smith", "F&B", "Evening", "—", "Not Marked"],
-                ].map(([employee, department, shift, checkIn, status]) => (
-                  <TableRow key={`${employee}-${shift}`}>
-                    <TableCell className="font-medium">{employee}</TableCell>
-                    <TableCell className="text-muted-foreground">{department}</TableCell>
-                    <TableCell className="text-muted-foreground">{shift}</TableCell>
-                    <TableCell className="text-muted-foreground">{checkIn}</TableCell>
-                    <TableCell>
-                      <span className="inline-flex rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                        {status}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        {/* Department Overview */}
-        <Card>
-          <CardHeader>
-            <p className="text-xs uppercase tracking-[0.24em] text-primary">
-              Department overview
-            </p>
-            <CardTitle className="text-xl">Quick summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2.5">
-              {[
-                ["Front Office", 5, 5],
-                ["Housekeeping", 8, 6],
-                ["Food & Beverage", 7, 5],
-                ["Maintenance", 3, 2],
-                ["Security", 2, 1],
-              ].map(([name, employees, present]) => (
-                <div
-                  key={name}
-                  className="flex items-center justify-between rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm transition-colors hover:bg-muted"
-                >
-                  <span className="font-medium text-foreground">{name}</span>
-                  <span className="text-muted-foreground">
-                    {employees as number} employees · {present as number} present
-                  </span>
+          {/* Tables Section */}
+          <section className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
+            {/* Today's Attendance */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.24em] text-primary">
+                      Today&apos;s attendance
+                    </p>
+                    <CardTitle className="mt-1 text-xl">
+                      Operational snapshot
+                    </CardTitle>
+                  </div>
+                  <Link
+                    href="/attendance"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    View All →
+                  </Link>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </section>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-hidden rounded-lg border border-border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Employee</TableHead>
+                        <TableHead>Department</TableHead>
+                        <TableHead>Shift</TableHead>
+                        <TableHead>Check In</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {attendance?.slice(0, 5).map((row) => (
+                        <TableRow key={row.employeeId}>
+                          <TableCell className="font-medium">{row.employeeName}</TableCell>
+                          <TableCell className="text-muted-foreground">{row.department}</TableCell>
+                          <TableCell className="text-muted-foreground">{row.shift}</TableCell>
+                          <TableCell className="text-muted-foreground">{row.checkIn || "—"}</TableCell>
+                          <TableCell>
+                            <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                              row.status === "PRESENT" 
+                                ? "bg-green-500/10 text-green-500 border-green-500/20" 
+                                : row.status === "LATE"
+                                ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                                : "bg-muted text-muted-foreground border-border"
+                            }`}>
+                              {row.status}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Department Overview */}
+            <Card>
+              <CardHeader>
+                <p className="text-xs uppercase tracking-[0.24em] text-primary">
+                  Department overview
+                </p>
+                <CardTitle className="text-xl">Quick summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2.5">
+                  {departmentStats.map((dep) => (
+                    <div
+                      key={dep.name}
+                      className="flex items-center justify-between rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm transition-colors hover:bg-muted"
+                    >
+                      <span className="font-medium text-foreground">{dep.name}</span>
+                      <span className="text-muted-foreground">
+                        {dep.total} employees · {dep.present} present
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+        </>
+      )}
     </div>
   );
 }

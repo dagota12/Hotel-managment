@@ -6,14 +6,21 @@ export type TodayAttendanceRow = {
   employeeName: string;
   department: string;
   shift: string;
-  checkInTime: string | null;
-  checkOutTime: string | null;
+  checkIn: string | null;
+  checkOut: string | null;
   status: string;
 };
 
 export const attendanceService = {
   async getToday() {
     const { data } = await api.get<TodayAttendanceRow[]>("/attendance/today");
+    return data;
+  },
+
+  async getEmployeeAttendance(employeeId: string) {
+    const { data } = await api.get<AttendanceRecord[]>("/attendance", {
+      params: { employeeId },
+    });
     return data;
   },
 

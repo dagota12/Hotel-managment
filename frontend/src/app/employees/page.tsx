@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,28 +23,40 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Users2, Loader2 } from "lucide-react";
-import { useEmployees, useCreateEmployee, useDeleteEmployee } from "@/hooks/use-employees";
+import { useEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee } from "@/hooks/use-employees";
 import { useDepartments } from "@/hooks/use-departments";
 import { useRoles } from "@/hooks/use-roles";
 import { useShifts } from "@/hooks/use-shifts";
+import type { Employee } from "@/types";
 
 export default function EmployeesPage() {
   const { data: employees, isLoading, error } = useEmployees();
   const deleteEmployee = useDeleteEmployee();
   
   const createEmployee = useCreateEmployee();
+  const updateEmployee = useUpdateEmployee();
+  
   const { data: departments } = useDepartments();
   const { data: roles } = useRoles();
   const { data: shifts } = useShifts();
 
-  // Form states
+  // Create Form states
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   const [roleId, setRoleId] = useState("");
   const [shiftId, setShiftId] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+  // Edit Form states
+  const [editEmployeeId, setEditEmployeeId] = useState<string | null>(null);
+  const [editFullName, setEditFullName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editDepartmentId, setEditDepartmentId] = useState("");
+  const [editRoleId, setEditRoleId] = useState("");
+  const [editShiftId, setEditShiftId] = useState("");
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +70,41 @@ export default function EmployeesPage() {
           setDepartmentId("");
           setRoleId("");
           setShiftId("");
-          setIsDialogOpen(false);
+          setIsCreateOpen(false);
+        },
+      }
+    );
+  };
+
+  const openEditDialog = (emp: Employee) => {
+    setEditEmployeeId(emp.id);
+    setEditFullName(emp.fullName);
+    setEditEmail(emp.email);
+    setEditPhone(emp.phone || "");
+    setEditDepartmentId(emp.department.id);
+    setEditRoleId(emp.role.id);
+    setEditShiftId(emp.shift.id);
+  };
+
+  const handleEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editEmployeeId) return;
+
+    updateEmployee.mutate(
+      { 
+        id: editEmployeeId, 
+        dto: { 
+          fullName: editFullName, 
+          email: editEmail, 
+          phone: editPhone, 
+          departmentId: editDepartmentId, 
+          roleId: editRoleId, 
+          shiftId: editShiftId 
+        } 
+      },
+      {
+        onSuccess: () => {
+          setEditEmployeeId(null);
         },
       }
     );
@@ -65,6 +112,81 @@ export default function EmployeesPage() {
 
   return (
     <section className="space-y-6">
+      {/* Edit Dialog */}
+      <Dialog open={!!editEmployeeId} onOpenChange={(open) => !open && setEditEmployeeId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Employee</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEdit} className="space-y-4">
+            <Input 
+              placeholder="Full Name" 
+              value={editFullName} 
+              onChange={e => setEditFullName(e.target.value)}
+              required
+            />
+            <Input 
+              type="email"
+              placeholder="Email Address" 
+              value={editEmail} 
+              onChange={e => setEditEmail(e.target.value)}
+              required
+            />
+            <Input 
+              placeholder="Phone Number (Optional)" 
+              value={editPhone} 
+              onChange={e => setEditPhone(e.target.value)}
+            />
+            
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <select
+                className="w-full rounded-lg border border-input bg-muted px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/50"
+                value={editDepartmentId}
+                onChange={e => setEditDepartmentId(e.target.value)}
+                required
+              >
+                <option value="" disabled>Select Department...</option>
+                {departments?.map(d => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
+
+              <select
+                className="w-full rounded-lg border border-input bg-muted px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/50"
+                value={editRoleId}
+                onChange={e => setEditRoleId(e.target.value)}
+                required
+              >
+                <option value="" disabled>Select Role...</option>
+                {roles?.map(r => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+              
+              <select
+                className="w-full rounded-lg border border-input bg-muted px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/50 sm:col-span-2"
+                value={editShiftId}
+                onChange={e => setEditShiftId(e.target.value)}
+                required
+              >
+                <option value="" disabled>Select Shift...</option>
+                {shifts?.map(s => (
+                  <option key={s.id} value={s.id}>{s.name} ({s.startTime} - {s.endTime})</option>
+                ))}
+              </select>
+            </div>
+
+            <DialogFooter>
+              <DialogClose render={<Button type="button" variant="ghost">Cancel</Button>} />
+              <Button type="submit" disabled={updateEmployee.isPending}>
+                {updateEmployee.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Header */}
       <Card>
         <CardContent className="pt-2">
@@ -81,7 +203,7 @@ export default function EmployeesPage() {
               </p>
             </div>
             
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger render={
                 <Button>
                   <Users2 className="h-4 w-4" />
@@ -224,7 +346,18 @@ export default function EmployeesPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button variant="outline" size="xs">
+                            <Button 
+                              variant="outline" 
+                              size="xs"
+                              render={<Link href={`/employees/${employee.id}`} />}
+                            >
+                              View
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="xs"
+                              onClick={() => openEditDialog(employee)}
+                            >
                               Edit
                             </Button>
                             <Button 
