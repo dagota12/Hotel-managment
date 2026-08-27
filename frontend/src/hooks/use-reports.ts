@@ -1,7 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getAttendanceSummary, getDepartmentSummary } from "@/services/report.service";
+import {
+  getAttendanceSummary,
+  getDepartmentSummary,
+} from "@/services/report.service";
 
 export function useAttendanceSummary(from: string, to: string) {
   return useQuery({

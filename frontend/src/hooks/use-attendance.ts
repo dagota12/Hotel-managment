@@ -1,12 +1,31 @@
-"use client";
-
-import { useQuery } from "@tanstack/react-query";
-import { getAttendanceRecords, getTodayAttendance } from "@/services/attendance.service";
-
-export function useAttendanceRecords() {
-  return useQuery({ queryKey: ["attendance"], queryFn: getAttendanceRecords });
-}
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { attendanceService } from "@/services/attendance.service";
 
 export function useTodayAttendance() {
-  return useQuery({ queryKey: ["attendance", "today"], queryFn: getTodayAttendance });
+  return useQuery({
+    queryKey: ["attendance", "today"],
+    queryFn: attendanceService.getToday,
+  });
+}
+
+export function useCheckIn() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (employeeId: string) => attendanceService.checkIn(employeeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["attendance", "today"] });
+    },
+  });
+}
+
+export function useCheckOut() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (employeeId: string) => attendanceService.checkOut(employeeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["attendance", "today"] });
+    },
+  });
 }

@@ -1,72 +1,250 @@
-import { Users2 } from "lucide-react";
+"use client";
 
-const employees = [
-  ["John Doe", "Front Office", "Receptionist", "Morning", "Active"],
-  ["Sarah Ali", "Housekeeping", "Housekeeper", "Evening", "Active"],
-  ["Mike Smith", "F&B", "Waiter", "Morning", "Active"],
-];
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Users2, Loader2 } from "lucide-react";
+import { useEmployees, useCreateEmployee, useDeleteEmployee } from "@/hooks/use-employees";
+import { useDepartments } from "@/hooks/use-departments";
+import { useRoles } from "@/hooks/use-roles";
+import { useShifts } from "@/hooks/use-shifts";
 
 export default function EmployeesPage() {
+  const { data: employees, isLoading, error } = useEmployees();
+  const deleteEmployee = useDeleteEmployee();
+  
+  const createEmployee = useCreateEmployee();
+  const { data: departments } = useDepartments();
+  const { data: roles } = useRoles();
+  const { data: shifts } = useShifts();
+
+  // Form states
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [roleId, setRoleId] = useState("");
+  const [shiftId, setShiftId] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleCreate = (e: React.FormEvent) => {
+    e.preventDefault();
+    createEmployee.mutate(
+      { fullName, email, phone, departmentId, roleId, shiftId },
+      {
+        onSuccess: () => {
+          setFullName("");
+          setEmail("");
+          setPhone("");
+          setDepartmentId("");
+          setRoleId("");
+          setShiftId("");
+          setIsDialogOpen(false);
+        },
+      }
+    );
+  };
+
   return (
     <section className="space-y-6">
-      <header className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.28em] text-amber-300">Employees</p>
-            <h1 className="mt-2 text-3xl font-semibold text-slate-50">Manage employees</h1>
-            <p className="mt-2 text-sm text-slate-300">15 employees</p>
+      {/* Header */}
+      <Card>
+        <CardContent className="pt-2">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.28em] text-primary">
+                Employees
+              </p>
+              <h1 className="mt-2 text-3xl font-semibold text-foreground">
+                Manage employees
+              </h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {employees?.length || 0} employees
+              </p>
+            </div>
+            
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger render={
+                <Button>
+                  <Users2 className="h-4 w-4" />
+                  Add Employee
+                </Button>
+              } />
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Employee</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleCreate} className="space-y-4">
+                  <Input 
+                    placeholder="Full Name" 
+                    value={fullName} 
+                    onChange={e => setFullName(e.target.value)}
+                    required
+                  />
+                  <Input 
+                    type="email"
+                    placeholder="Email Address" 
+                    value={email} 
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                  />
+                  <Input 
+                    placeholder="Phone Number (Optional)" 
+                    value={phone} 
+                    onChange={e => setPhone(e.target.value)}
+                  />
+                  
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <select
+                      className="w-full rounded-lg border border-input bg-muted px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/50"
+                      value={departmentId}
+                      onChange={e => setDepartmentId(e.target.value)}
+                      required
+                    >
+                      <option value="" disabled>Select Department...</option>
+                      {departments?.map(d => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                      ))}
+                    </select>
+
+                    <select
+                      className="w-full rounded-lg border border-input bg-muted px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/50"
+                      value={roleId}
+                      onChange={e => setRoleId(e.target.value)}
+                      required
+                    >
+                      <option value="" disabled>Select Role...</option>
+                      {roles?.map(r => (
+                        <option key={r.id} value={r.id}>{r.name}</option>
+                      ))}
+                    </select>
+                    
+                    <select
+                      className="w-full rounded-lg border border-input bg-muted px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/50 sm:col-span-2"
+                      value={shiftId}
+                      onChange={e => setShiftId(e.target.value)}
+                      required
+                    >
+                      <option value="" disabled>Select Shift...</option>
+                      {shifts?.map(s => (
+                        <option key={s.id} value={s.id}>{s.name} ({s.startTime} - {s.endTime})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <DialogFooter>
+                    <DialogClose render={<Button type="button" variant="ghost">Cancel</Button>} />
+                    <Button type="submit" disabled={createEmployee.isPending}>
+                      {createEmployee.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Save Employee
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+            
           </div>
-          <button className="inline-flex items-center gap-2 rounded-full bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-950">
-            <Users2 className="h-4 w-4" />
-            Add Employee
-          </button>
-        </div>
-      </header>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 xl:grid-cols-[280px_1fr]">
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
-          <input className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none placeholder:text-slate-500" placeholder="Search employees..." />
-          <div className="mt-4 grid gap-3">
-            {['Department', 'Role', 'Shift', 'Status'].map((label) => (
-              <select key={label} className="rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none">
-                <option>{label}</option>
-              </select>
-            ))}
-          </div>
-        </div>
-
-        <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/5 backdrop-blur-xl">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-950/55 text-slate-300">
-              <tr>
-                <th className="px-5 py-4 font-medium">Employee</th>
-                <th className="px-5 py-4 font-medium">Department</th>
-                <th className="px-5 py-4 font-medium">Role</th>
-                <th className="px-5 py-4 font-medium">Shift</th>
-                <th className="px-5 py-4 font-medium">Status</th>
-                <th className="px-5 py-4 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/10 text-slate-100">
-              {employees.map(([name, department, role, shift, status]) => (
-                <tr key={`${name}-${shift}`}>
-                  <td className="px-5 py-4 font-medium">{name}</td>
-                  <td className="px-5 py-4 text-slate-300">{department}</td>
-                  <td className="px-5 py-4 text-slate-300">{role}</td>
-                  <td className="px-5 py-4 text-slate-300">{shift}</td>
-                  <td className="px-5 py-4 text-slate-300">{status}</td>
-                  <td className="px-5 py-4">
-                    <div className="flex gap-2 text-xs font-medium">
-                      <button className="rounded-full border border-white/10 bg-white/5 px-3 py-2">View</button>
-                      <button className="rounded-full border border-white/10 bg-white/5 px-3 py-2">Edit</button>
-                      <button className="rounded-full border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-rose-100">Delete</button>
-                    </div>
-                  </td>
-                </tr>
+        {/* Filters Sidebar */}
+        <Card>
+          <CardContent>
+            <Input placeholder="Search employees..." />
+            <div className="mt-4 grid gap-3">
+              {["Department", "Role", "Shift", "Status"].map((label) => (
+                <select
+                  key={label}
+                  className="w-full rounded-lg border border-input bg-muted px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/50"
+                >
+                  <option>{label}</option>
+                </select>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Employee Table */}
+        <Card>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex h-48 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : error ? (
+              <div className="flex h-48 items-center justify-center text-destructive">
+                Failed to load employees.
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-lg border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Employee</TableHead>
+                      <TableHead>Department</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Shift</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {employees?.map((employee) => (
+                      <TableRow key={employee.id}>
+                        <TableCell className="font-medium">
+                          {employee.fullName}
+                          <div className="text-xs text-muted-foreground font-normal">{employee.email}</div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{employee.department?.name}</TableCell>
+                        <TableCell className="text-muted-foreground">{employee.role?.name}</TableCell>
+                        <TableCell className="text-muted-foreground">{employee.shift?.name}</TableCell>
+                        <TableCell>
+                          <span className="inline-flex rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                            Active
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="xs">
+                              Edit
+                            </Button>
+                            <Button 
+                              variant="destructive" 
+                              size="xs"
+                              onClick={() => deleteEmployee.mutate(employee.id)}
+                              disabled={deleteEmployee.isPending}
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </section>
   );

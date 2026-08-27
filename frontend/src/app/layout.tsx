@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Geist } from "next/font/google";
 import "./globals.css";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Providers } from "@/components/providers";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 const inter = Inter({
   variable: "--font-inter",
@@ -16,11 +19,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${inter.variable} h-full antialiased`}
-    >
-      <body className="min-h-full bg-slate-950 text-slate-100">
+    <html lang="en" className={cn("dark h-full antialiased", inter.variable, geist.variable)}>
+      <body className="min-h-full">
         <Providers>
           <div className="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
             <AppSidebar />
