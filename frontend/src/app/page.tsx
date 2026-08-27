@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Building2, Clock3, Users2, Loader2, TrendingUp, Award } from "lucide-react";
+import { Users2, UserCheck, Clock, AlertCircle, TrendingUp, Award } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import {
   Table,
@@ -25,8 +25,8 @@ import { useMemo } from "react";
 
 const trendChartConfig = {
   present: {
-    label: "Present",
-    color: "#EAB308", // Gold
+    label: "On Time",
+    color: "#EAB308", // Primary Gold
   },
   late: {
     label: "Late",
@@ -36,10 +36,10 @@ const trendChartConfig = {
 
 const COLORS = [
   "#EAB308", // Gold
-  "#3B82F6", // Blue
   "#10B981", // Emerald
+  "#3B82F6", // Blue
   "#F59E0B", // Amber
-  "#8B5CF6", // Purple
+  "#14B8A6", // Teal
   "#EC4899", // Pink
 ];
 
@@ -51,21 +51,22 @@ export default function Home() {
 
   const isLoading = employeesLoading || attendanceLoading || trendLoading || deptLoading;
 
+  // Clear metric logic: Total, On Time, Late, Not Checked In
   const stats = useMemo(() => {
-    if (!employees || !attendance) return { total: 0, present: 0, late: 0, missing: 0 };
+    if (!employees || !attendance) return { total: 0, onTime: 0, late: 0, missing: 0 };
     
     const total = employees.length;
-    let present = 0;
+    let onTime = 0;
     let late = 0;
     let missing = 0;
 
     attendance.forEach(record => {
-      if (record.status === "PRESENT") present++;
+      if (record.status === "PRESENT") onTime++;
       else if (record.status === "LATE") late++;
       else if (!record.checkIn) missing++;
     });
 
-    return { total, present, late, missing };
+    return { total, onTime, late, missing };
   }, [employees, attendance]);
 
   const deptChartConfig = useMemo(() => {
@@ -83,104 +84,126 @@ export default function Home() {
   const deptChartHeight = useMemo(() => {
     const count = (deptData || []).length;
     if (count === 0) return 120;
-    return Math.min(320, Math.max(90, count * 45));
+    return Math.min(300, Math.max(90, count * 45));
   }, [deptData]);
 
   return (
     <div className="space-y-6">
-      {/* Hero Section */}
-      <Card>
-        <CardContent className="pt-2">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-                Hotel HR Console
-              </p>
-              <div className="space-y-2">
-                <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-                  Hotel Employee Management
-                </h1>
-                <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                  Manage employees, attendance, departments, roles, and reports
-                  from one clean dashboard built for fast hotel operations.
-                </p>
-              </div>
-            </div>
-
-            <Link
-              href="/attendance"
-              className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/80"
-            >
-              Open Today&apos;s Attendance
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Compact Top Header */}
+      <div className="flex flex-col gap-1 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            Dashboard
+          </h1>
+          <p className="text-sm font-medium text-slate-300">
+            Real-time overview of attendance, team statistics, and operations.
+          </p>
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="flex h-64 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         </div>
       ) : (
         <>
-          {/* Stats Cards */}
+          {/* KPI Metrics Cards */}
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              { label: "Total Employees", value: stats.total, icon: Users2 },
-              { label: "Present Today", value: stats.present, icon: Clock3 },
-              { label: "Late Today", value: stats.late, icon: Building2 },
-              { label: "Not Checked In", value: stats.missing, icon: Users2 },
-            ].map(({ label, value, icon: Icon }) => (
-              <Card key={label}>
-                <CardContent>
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-muted-foreground">{label}</span>
-                    <Icon className="h-5 w-5 text-primary" />
+            <Card className="border-border/60 bg-card/80 backdrop-blur-sm">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-medium text-slate-300">Total Employees</span>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Users2 className="h-5 w-5" />
                   </div>
-                  <div className="mt-4 text-4xl font-semibold tracking-tight text-foreground">
-                    {value}
+                </div>
+                <div className="mt-3 text-3xl font-bold tracking-tight text-foreground">
+                  {stats.total}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/60 bg-card/80 backdrop-blur-sm">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-medium text-slate-300">On Time Today</span>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
+                    <UserCheck className="h-5 w-5" />
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+                <div className="mt-3 text-3xl font-bold tracking-tight text-emerald-400">
+                  {stats.onTime}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/60 bg-card/80 backdrop-blur-sm">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-medium text-slate-300">Late Today</span>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
+                    <Clock className="h-5 w-5" />
+                  </div>
+                </div>
+                <div className="mt-3 text-3xl font-bold tracking-tight text-amber-400">
+                  {stats.late}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/60 bg-card/80 backdrop-blur-sm">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-medium text-slate-300">Not Checked In</span>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-500/10 text-rose-500">
+                    <AlertCircle className="h-5 w-5" />
+                  </div>
+                </div>
+                <div className="mt-3 text-3xl font-bold tracking-tight text-rose-400">
+                  {stats.missing}
+                </div>
+              </CardContent>
+            </Card>
           </section>
 
-          {/* Charts Section — Line Chart + Horizontal Bar Chart */}
+          {/* Charts Section */}
           <section className="grid gap-6 lg:grid-cols-2">
             {/* Chart 1: Attendance Trend — Line Chart */}
-            <Card>
+            <Card className="border-border/60 bg-card/80 backdrop-blur-sm">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.24em] text-primary">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
                       Operational Trend
                     </p>
-                    <CardTitle className="text-xl mt-1">Attendance — Last 7 Days</CardTitle>
+                    <CardTitle className="text-xl mt-0.5">Attendance — Last 7 Days</CardTitle>
                   </div>
                   <TrendingUp className="h-5 w-5 text-primary" />
                 </div>
-                <CardDescription>Daily present vs. late check-in trendline</CardDescription>
+                <CardDescription className="text-slate-300">
+                  Daily comparison of on-time vs. late check-ins
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <ChartContainer config={trendChartConfig} className="h-[260px] w-full">
+                <ChartContainer config={trendChartConfig} className="h-[240px] w-full">
                   <LineChart
                     accessibilityLayer
                     data={trendData || []}
-                    margin={{ top: 10, right: 15, left: -20, bottom: 0 }}
+                    margin={{ top: 15, right: 15, left: -20, bottom: 0 }}
                   >
-                    <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.2} />
                     <XAxis
                       dataKey="day"
                       tickLine={false}
                       axisLine={false}
                       tickMargin={8}
                     />
-                    <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
+                    <YAxis tickLine={false} axisLine={false} allowDecimals={false} domain={[0, 'auto']} />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Line
                       type="monotone"
                       dataKey="present"
+                      name="On Time"
                       stroke="var(--color-present)"
                       strokeWidth={2.5}
                       dot={{ r: 4, fill: "var(--color-present)" }}
@@ -189,6 +212,7 @@ export default function Home() {
                     <Line
                       type="monotone"
                       dataKey="late"
+                      name="Late"
                       stroke="var(--color-late)"
                       strokeWidth={2.5}
                       dot={{ r: 4, fill: "var(--color-late)" }}
@@ -197,26 +221,35 @@ export default function Home() {
                   </LineChart>
                 </ChartContainer>
               </CardContent>
-              <CardFooter className="border-t border-border pt-3 text-xs text-muted-foreground">
-                Line chart showing 7-day present (Gold) vs late (Amber) trends.
+              <CardFooter className="flex items-center gap-6 border-t border-border/40 pt-3 text-xs text-slate-300">
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-yellow-500" />
+                  <span>On Time</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+                  <span>Late</span>
+                </div>
               </CardFooter>
             </Card>
 
             {/* Chart 2: Department Attendance Rate — Horizontal Bar Chart */}
-            <Card>
+            <Card className="border-border/60 bg-card/80 backdrop-blur-sm">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.24em] text-primary">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
                       Department Insights
                     </p>
-                    <CardTitle className="text-xl mt-1">Attendance Rate by Department</CardTitle>
+                    <CardTitle className="text-xl mt-0.5">Attendance Rate by Department</CardTitle>
                   </div>
                   <Award className="h-5 w-5 text-primary" />
                 </div>
-                <CardDescription>Today&apos;s check-in completion rate per team</CardDescription>
+                <CardDescription className="text-slate-300">
+                  Today&apos;s check-in completion rate per team
+                </CardDescription>
               </CardHeader>
-              <CardContent className="overflow-y-auto max-h-[300px] pr-2">
+              <CardContent className="overflow-y-auto max-h-[280px] pr-2">
                 <ChartContainer config={deptChartConfig} style={{ height: `${deptChartHeight}px` }} className="w-full">
                   <BarChart
                     layout="vertical"
@@ -224,14 +257,14 @@ export default function Home() {
                     data={deptData || []}
                     margin={{ top: 10, right: 25, left: 15, bottom: 0 }}
                   >
-                    <CartesianGrid horizontal={false} strokeDasharray="3 3" opacity={0.3} />
+                    <CartesianGrid horizontal={false} strokeDasharray="3 3" opacity={0.2} />
                     <XAxis type="number" domain={[0, 100]} unit="%" tickLine={false} axisLine={false} />
                     <YAxis
                       dataKey="department"
                       type="category"
                       tickLine={false}
                       axisLine={false}
-                      width={100}
+                      width={90}
                     />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Bar dataKey="rate" maxBarSize={16} radius={[0, 4, 4, 0]}>
@@ -242,27 +275,36 @@ export default function Home() {
                   </BarChart>
                 </ChartContainer>
               </CardContent>
-              <CardFooter className="border-t border-border pt-3 text-xs text-muted-foreground">
-                Horizontal bar chart showing attendance percentage for each department.
+              <CardFooter className="flex flex-wrap items-center gap-3 border-t border-border/40 pt-3 text-xs text-slate-300">
+                {(deptData || []).map((d, idx) => (
+                  <div key={d.department} className="flex items-center gap-1.5 rounded-md border border-border/50 bg-accent/40 px-2.5 py-1">
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{ backgroundColor: COLORS[idx % COLORS.length] }}
+                    />
+                    <span className="font-semibold text-foreground">{d.department}:</span>
+                    <span className="text-slate-200">{d.rate}% ({d.present}/{d.employees})</span>
+                  </div>
+                ))}
               </CardFooter>
             </Card>
           </section>
 
-          {/* Today's Attendance Table */}
-          <Card>
+          {/* Today's Attendance Snapshot Table */}
+          <Card className="border-border/60 bg-card/80 backdrop-blur-sm">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.24em] text-primary">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
                     Today&apos;s attendance
                   </p>
-                  <CardTitle className="mt-1 text-xl">
+                  <CardTitle className="mt-0.5 text-xl">
                     Operational snapshot
                   </CardTitle>
                 </div>
                 <Link
                   href="/attendance"
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
                 >
                   View All →
                 </Link>
@@ -284,13 +326,13 @@ export default function Home() {
                     {attendance?.slice(0, 6).map((row) => (
                       <TableRow key={row.employeeId} className="hover:bg-muted/50 transition-colors">
                         <TableCell className="font-medium text-foreground py-3.5">{row.employeeName}</TableCell>
-                        <TableCell className="text-muted-foreground">{row.department}</TableCell>
-                        <TableCell className="text-muted-foreground">{row.shift}</TableCell>
+                        <TableCell className="text-slate-300">{row.department}</TableCell>
+                        <TableCell className="text-slate-300">{row.shift}</TableCell>
                         <TableCell className="font-medium">
                           <span className={
-                            row.status === "LATE" ? "text-amber-500" 
-                            : row.status === "PRESENT" ? "text-green-500" 
-                            : "text-muted-foreground"
+                            row.status === "LATE" ? "text-amber-400 font-semibold" 
+                            : row.status === "PRESENT" ? "text-emerald-400 font-semibold" 
+                            : "text-slate-400"
                           }>
                             {formatTime(row.checkIn)}
                           </span>
@@ -298,10 +340,10 @@ export default function Home() {
                         <TableCell>
                           <span className={`inline-flex items-center justify-center rounded-full px-3 py-0.5 text-xs font-semibold ${
                             row.status === "PRESENT" 
-                              ? "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400" 
+                              ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" 
                               : row.status === "LATE"
-                              ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400"
-                              : "bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400"
+                              ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                              : "bg-slate-500/15 text-slate-400 border border-slate-500/30"
                           }`}>
                             {row.status}
                           </span>

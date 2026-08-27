@@ -130,28 +130,58 @@ export default function EmployeesPage() {
             <DialogTitle>Edit Employee</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleEdit} className="space-y-4">
-            <Input placeholder="Full Name" value={editFullName} onChange={e => setEditFullName(e.target.value)} required />
-            <Input type="email" placeholder="Email Address" value={editEmail} onChange={e => setEditEmail(e.target.value)} required />
-            <Input placeholder="Phone Number (Optional)" value={editPhone} onChange={e => setEditPhone(e.target.value)} />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">Full Name</label>
+              <Input placeholder="Full Name" value={editFullName} onChange={e => setEditFullName(e.target.value)} required />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">Email Address</label>
+              <Input type="email" placeholder="Email Address" value={editEmail} onChange={e => setEditEmail(e.target.value)} required />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">Phone Number</label>
+              <Input placeholder="Phone Number (Optional)" value={editPhone} onChange={e => setEditPhone(e.target.value)} />
+            </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Select value={editDepartmentId} onValueChange={v => setEditDepartmentId(v || "")}>
-                <SelectTrigger><SelectValue placeholder="Department..." /></SelectTrigger>
-                <SelectContent>
-                  {departments?.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Select value={editRoleId} onValueChange={v => setEditRoleId(v || "")}>
-                <SelectTrigger><SelectValue placeholder="Role..." /></SelectTrigger>
-                <SelectContent>
-                  {roles?.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Select value={editShiftId} onValueChange={v => setEditShiftId(v || "")}>
-                <SelectTrigger className="sm:col-span-2"><SelectValue placeholder="Shift..." /></SelectTrigger>
-                <SelectContent>
-                  {shifts?.map(s => <SelectItem key={s.id} value={s.id}>{s.name} ({s.startTime} - {s.endTime})</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">Department</label>
+                <Select value={editDepartmentId} onValueChange={v => setEditDepartmentId(v || "")}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Department...">
+                      {departments?.find(d => d.id === editDepartmentId)?.name}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments?.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">Role</label>
+                <Select value={editRoleId} onValueChange={v => setEditRoleId(v || "")}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Role...">
+                      {roles?.find(r => r.id === editRoleId)?.name}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles?.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-xs font-semibold text-foreground">Assigned Shift</label>
+                <Select value={editShiftId} onValueChange={v => setEditShiftId(v || "")}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Shift...">
+                      {shifts?.find(s => s.id === editShiftId)?.name}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {shifts?.map(s => <SelectItem key={s.id} value={s.id}>{s.name} ({s.startTime} - {s.endTime})</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <DialogFooter>
               <DialogClose render={<Button type="button" variant="ghost">Cancel</Button>} />
@@ -183,28 +213,58 @@ export default function EmployeesPage() {
                   <DialogTitle>Add New Employee</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleCreate} className="space-y-4">
-                  <Input placeholder="Full Name" value={fullName} onChange={e => setFullName(e.target.value)} required />
-                  <Input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} required />
-                  <Input placeholder="Phone Number (Optional)" value={phone} onChange={e => setPhone(e.target.value)} />
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground">Full Name</label>
+                    <Input placeholder="Full Name" value={fullName} onChange={e => setFullName(e.target.value)} required />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground">Email Address</label>
+                    <Input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} required />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground">Phone Number</label>
+                    <Input placeholder="Phone Number (Optional)" value={phone} onChange={e => setPhone(e.target.value)} />
+                  </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <Select value={departmentId} onValueChange={v => setDepartmentId(v || "")}>
-                      <SelectTrigger><SelectValue placeholder="Department..." /></SelectTrigger>
-                      <SelectContent>
-                        {departments?.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <Select value={roleId} onValueChange={v => setRoleId(v || "")}>
-                      <SelectTrigger><SelectValue placeholder="Role..." /></SelectTrigger>
-                      <SelectContent>
-                        {roles?.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <Select value={shiftId} onValueChange={v => setShiftId(v || "")}>
-                      <SelectTrigger className="sm:col-span-2"><SelectValue placeholder="Shift..." /></SelectTrigger>
-                      <SelectContent>
-                        {shifts?.map(s => <SelectItem key={s.id} value={s.id}>{s.name} ({s.startTime} - {s.endTime})</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-foreground">Department</label>
+                      <Select value={departmentId} onValueChange={v => setDepartmentId(v || "")}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Department...">
+                            {departments?.find(d => d.id === departmentId)?.name}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {departments?.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-foreground">Role</label>
+                      <Select value={roleId} onValueChange={v => setRoleId(v || "")}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Role...">
+                            {roles?.find(r => r.id === roleId)?.name}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {roles?.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-xs font-semibold text-foreground">Assigned Shift</label>
+                      <Select value={shiftId} onValueChange={v => setShiftId(v || "")}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Shift...">
+                            {shifts?.find(s => s.id === shiftId)?.name}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {shifts?.map(s => <SelectItem key={s.id} value={s.id}>{s.name} ({s.startTime} - {s.endTime})</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   <DialogFooter>
                     <DialogClose render={<Button type="button" variant="ghost">Cancel</Button>} />
