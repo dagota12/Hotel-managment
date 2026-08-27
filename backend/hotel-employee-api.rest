@@ -1,0 +1,147 @@
+@baseUrl = http://localhost:3000
+@departmentId = 63d3b569-8cb4-40c5-8c03-2a146563bd0f
+@roleId = b31ed09c-b8a0-4b7f-96f9-22e0901046eb
+@shiftId = 7c7948f6-4b50-433e-a296-611e6345bd45
+@employeeId = 9f2ca566-75d7-4eb7-ba0b-9cb36edface0
+@attendanceId = REPLACE_ME_ATTENDANCE_ID
+@fromDate = 2026-08-01
+@toDate = 2026-08-27
+
+### Departments
+GET {{baseUrl}}/departments
+
+### Create department
+POST {{baseUrl}}/departments
+Content-Type: application/json
+
+{
+  "name": "Chef"
+}
+
+### Get department by id
+GET {{baseUrl}}/departments/{{departmentId}}
+
+### Update department
+PATCH {{baseUrl}}/departments/{{departmentId}}
+Content-Type: application/json
+
+{
+  "name": "Front Desk"
+}
+
+### Delete department
+DELETE {{baseUrl}}/departments/{{departmentId}}
+
+### Roles
+GET {{baseUrl}}/roles
+
+### Create role
+POST {{baseUrl}}/roles
+Content-Type: application/json
+
+{
+  "name": "Chef"
+}
+
+### Get role by id
+GET {{baseUrl}}/roles/{{roleId}}
+
+### Update role
+PATCH {{baseUrl}}/roles/{{roleId}}
+Content-Type: application/json
+
+{
+  "name": "Senior Receptionist"
+}
+
+### Delete role
+DELETE {{baseUrl}}/roles/{{roleId}}
+
+### Shifts
+GET {{baseUrl}}/shifts
+
+### Create shift
+POST {{baseUrl}}/shifts
+Content-Type: application/json
+
+{
+  "name": "Morning",
+  "startTime": "08:00",
+  "endTime": "16:00"
+}
+
+### Get shift by id
+GET {{baseUrl}}/shifts/{{shiftId}}
+
+### Update shift
+PATCH {{baseUrl}}/shifts/{{shiftId}}
+Content-Type: application/json
+
+{
+  "name": "Early Morning",
+  "startTime": "07:00",
+  "endTime": "15:00"
+}
+
+### Delete shift
+DELETE {{baseUrl}}/shifts/{{shiftId}}
+
+### Employees
+GET {{baseUrl}}/employees
+
+### Create employee
+POST {{baseUrl}}/employees
+Content-Type: application/json
+
+{
+  "fullName": "Chef Doe",
+  "email": "chef@example.com",
+  "phone": "+1 333 0100",
+  "departmentId": "{{departmentId}}",
+  "roleId": "{{roleId}}",
+  "shiftId": "{{shiftId}}"
+}
+
+### Get employee by id
+GET {{baseUrl}}/employees/{{employeeId}}
+
+### Update employee
+PATCH {{baseUrl}}/employees/{{employeeId}}
+Content-Type: application/json
+
+{
+  "fullName": "John A. Doe",
+  "email": "john.a@example.com",
+  "phone": "+1 555 0111",
+  "departmentId": "{{departmentId}}",
+  "roleId": "{{roleId}}",
+  "shiftId": "{{shiftId}}"
+}
+
+### Delete employee
+DELETE {{baseUrl}}/employees/{{employeeId}}
+
+### Attendance
+GET {{baseUrl}}/attendance?from={{fromDate}}&to={{toDate}}
+
+### Filter attendance by employee and status
+GET {{baseUrl}}/attendance?employeeId={{employeeId}}&from={{fromDate}}&to={{toDate}}&status=PRESENT
+
+### Create attendance
+POST {{baseUrl}}/attendance
+Content-Type: application/json
+
+{
+  "employeeId": "{{employeeId}}",
+  "date": "2026-08-27",
+  "checkIn": "08:03",
+  "checkOut": "17:02",
+  "status": "PRESENT",
+  "note": "Arrived a few minutes late"
+}
+
+### Reports
+GET {{baseUrl}}/reports/attendance?from={{fromDate}}&to={{toDate}}
+
+### Department attendance report
+GET {{baseUrl}}/reports/department-attendance?from={{fromDate}}&to={{toDate}}

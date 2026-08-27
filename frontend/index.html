@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hotel Employee Management</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./app.js" defer></script>
+  </head>
+  <body>
+    <div class="background-orbit background-orbit-a"></div>
+    <div class="background-orbit background-orbit-b"></div>
+
+    <main class="shell">
+      <section class="hero card">
+        <div>
+          <p class="eyebrow">Hotel HR console</p>
+          <h1>
+            Manage employees, shifts, attendance, and reports in one place.
+          </h1>
+          <p class="hero-copy">
+            Built for a small hotel operations workflow: departments, roles,
+            shifts, employee records, and attendance analytics.
+          </p>
+        </div>
+        <div class="hero-stats">
+          <article>
+            <span id="employeeCount">0</span>
+            <small>Employees</small>
+          </article>
+          <article>
+            <span id="attendanceCount">0</span>
+            <small>Attendance rows</small>
+          </article>
+          <article>
+            <span id="departmentCount">0</span>
+            <small>Departments</small>
+          </article>
+        </div>
+      </section>
+
+      <section class="grid two-up">
+        <article class="card panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Master data</p>
+              <h2>Create departments</h2>
+            </div>
+          </div>
+          <form id="departmentForm" class="stack">
+            <input name="name" placeholder="Reception" required />
+            <button type="submit">Add department</button>
+          </form>
+          <div id="departmentsList" class="list"></div>
+        </article>
+
+        <article class="card panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Master data</p>
+              <h2>Create roles</h2>
+            </div>
+          </div>
+          <form id="roleForm" class="stack">
+            <input name="name" placeholder="Receptionist" required />
+            <button type="submit">Add role</button>
+          </form>
+          <div id="rolesList" class="list"></div>
+        </article>
+      </section>
+
+      <section class="grid two-up">
+        <article class="card panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Master data</p>
+              <h2>Create shifts</h2>
+            </div>
+          </div>
+          <form id="shiftForm" class="stack">
+            <input name="name" placeholder="Morning" required />
+            <div class="row">
+              <input name="startTime" placeholder="08:00" required />
+              <input name="endTime" placeholder="16:00" required />
+            </div>
+            <button type="submit">Add shift</button>
+          </form>
+          <div id="shiftsList" class="list"></div>
+        </article>
+
+        <article class="card panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Operations</p>
+              <h2>Create employees</h2>
+            </div>
+          </div>
+          <form id="employeeForm" class="stack">
+            <input name="fullName" placeholder="John Doe" required />
+            <input
+              name="email"
+              type="email"
+              placeholder="john@example.com"
+              required
+            />
+            <input name="phone" placeholder="+1 555 0100" />
+            <select name="departmentId" required></select>
+            <select name="roleId" required></select>
+            <select name="shiftId" required></select>
+            <button type="submit">Add employee</button>
+          </form>
+          <div id="employeesList" class="list"></div>
+        </article>
+      </section>
+
+      <section class="grid two-up">
+        <article class="card panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Operations</p>
+              <h2>Record attendance</h2>
+            </div>
+          </div>
+          <form id="attendanceForm" class="stack">
+            <select name="employeeId" required></select>
+            <div class="row">
+              <input name="date" type="date" required />
+              <select name="status" required>
+                <option value="PRESENT">Present</option>
+                <option value="LATE">Late</option>
+                <option value="ABSENT">Absent</option>
+                <option value="LEAVE">Leave</option>
+              </select>
+            </div>
+            <div class="row">
+              <input name="checkIn" placeholder="08:03" />
+              <input name="checkOut" placeholder="17:02" />
+            </div>
+            <input name="note" placeholder="Optional note" />
+            <button type="submit">Save attendance</button>
+          </form>
+          <div id="attendanceList" class="list"></div>
+        </article>
+
+        <article class="card panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Analytics</p>
+              <h2>Attendance report</h2>
+            </div>
+          </div>
+          <form id="reportForm" class="stack">
+            <div class="row">
+              <input name="from" type="date" required />
+              <input name="to" type="date" required />
+            </div>
+            <button type="submit">Generate report</button>
+          </form>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Department</th>
+                  <th>Present</th>
+                  <th>Absent</th>
+                  <th>Late</th>
+                  <th>Rate</th>
+                </tr>
+              </thead>
+              <tbody id="reportBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section class="card panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">API</p>
+            <h2>Quick access</h2>
+          </div>
+          <a class="docs-link" href="/docs" target="_blank" rel="noreferrer"
+            >Open Swagger</a
+          >
+        </div>
+        <p class="hero-copy">
+          The backend serves this dashboard and the API from the same origin, so
+          everything works without extra setup.
+        </p>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" aria-live="polite"></div>
+  </body>
+</html>
